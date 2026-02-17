@@ -9,7 +9,8 @@ from PIL import Image
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # preload AI model once
-session = new_session()
+session = new_session("u2netp")
+
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
