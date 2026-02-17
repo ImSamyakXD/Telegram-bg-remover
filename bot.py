@@ -1,6 +1,5 @@
 import os
 import io
-import asyncio
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -13,44 +12,28 @@ from rembg import remove
 from PIL import Image
 
 
-# ==========================
-# BOT TOKEN FROM ENV VARIABLE
-# ==========================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
-# ==========================
-# START COMMAND
-# ==========================
+# START
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 Welcome to AI Background Remover Bot!\n\n"
-        "📸 Send me any photo and I will remove the background automatically.\n\n"
-        "Commands:\n"
-        "/start - Start bot\n"
-        "/help - Help info"
+        "Send a photo and I will remove background."
     )
 
 
-# ==========================
-# HELP COMMAND
-# ==========================
+# HELP
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🛠 How to use:\n"
-        "1️⃣ Send a photo\n"
-        "2️⃣ Wait few seconds\n"
-        "3️⃣ Download transparent PNG\n\n"
-        "Powered by AI 🤖"
+        "Send any photo to remove background."
     )
 
 
-# ==========================
-# REMOVE BACKGROUND FUNCTION
-# ==========================
+# REMOVE BACKGROUND
 async def remove_bg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        await update.message.reply_text("⏳ Processing image...")
+        msg = await update.message.reply_text("⏳ Processing...")
 
         photo = update.message.photo[-1]
         file = await photo.get_file()
@@ -62,23 +45,23 @@ async def remove_bg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         output = remove(input_image)
 
         bio = io.BytesIO()
-        output.save(bio, format="PNG")
+        output.save(bio, "PNG")
         bio.seek(0)
 
         await update.message.reply_document(
             document=bio,
-            filename="removed_background.png",
-            caption="✅ Background Removed Successfully!"
+            filename="removed.png",
+            caption="✅ Done!"
         )
 
+        await msg.delete()
+
     except Exception as e:
-        print("Error:", e)
+        print("ERROR:", e)
         await update.message.reply_text("❌ Failed to process image")
 
 
-# ==========================
-# MAIN FUNCTION
-# ==========================
+# MAIN
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -92,10 +75,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# ==========================
-# RUN BOT
-# ==========================
-if __name__ == "__main__":
-    asyncio.run(main())
