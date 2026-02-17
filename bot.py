@@ -79,7 +79,7 @@ async def remove_bg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ==========================
 # MAIN FUNCTION
 # ==========================
-async def main():
+def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -87,7 +87,11 @@ async def main():
     app.add_handler(MessageHandler(filters.PHOTO, remove_bg))
 
     print("✅ Bot Running...")
-    await app.run_polling()
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
 
 
 # ==========================
