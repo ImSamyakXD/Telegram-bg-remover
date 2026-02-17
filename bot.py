@@ -1,36 +1,21 @@
 import os
 import io
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    MessageHandler,
-    ContextTypes,
-    filters,
-)
-from rembg import remove
+from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
+from rembg import remove, new_session
 from PIL import Image
 
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+# preload AI model once
+session = new_session()
 
-# START
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 Welcome to AI Background Remover Bot!\n\n"
-        "Send a photo and I will remove background."
-    )
+    await update.message.reply_text("Send a photo to remove background.")
 
 
-# HELP
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Send any photo to remove background."
-    )
-
-
-# REMOVE BACKGROUND
 async def remove_bg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         msg = await update.message.reply_text("⏳ Processing...")
@@ -40,33 +25,38 @@ async def remove_bg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         img_bytes = await file.download_as_bytearray()
 
+        print("Image received")
+
         input_image = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
 
-        output = remove(input_image)
+        print("Running AI model...")
+
+        output = remove(input_image, session=session)
 
         bio = io.BytesIO()
-        output.save(bio, "PNG")
+        output.save(bio, format="PNG")
         bio.seek(0)
+
+        print("Sending result...")
 
         await update.message.reply_document(
             document=bio,
-            filename="removed.png",
-            caption="✅ Done!"
+            filename="removed.png"
         )
 
         await msg.delete()
+
+        print("Done")
 
     except Exception as e:
         print("ERROR:", e)
         await update.message.reply_text("❌ Failed to process image")
 
 
-# MAIN
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
     app.add_handler(MessageHandler(filters.PHOTO, remove_bg))
 
     print("✅ Bot Running...")
